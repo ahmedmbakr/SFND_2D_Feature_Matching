@@ -18,6 +18,15 @@
 
 using namespace std;
 
+/**
+ * This function is responsible for adding a new frame to data buffer. If the buffer size reached the maximum data buffer size
+ * then it will through the first element and add the new frame at the end, so it is like a queue.
+ * \param[in] frame Input frame
+ * \param[out] dataBuffer data buffer that contains the elements
+ * \param[in] maxDataBuffersize maximum size for data buffer
+ */ 
+void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer, const int maxDataBufferSize);
+
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
@@ -37,6 +46,8 @@ int main(int argc, const char *argv[])
 
     // misc
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
+    //The size of data buffer is 2 for constant velocity model, and its 3 for constant acceleration model
+
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
 
@@ -62,7 +73,7 @@ int main(int argc, const char *argv[])
         // push image into data frame buffer
         DataFrame frame;
         frame.cameraImg = imgGray;
-        dataBuffer.push_back(frame);
+        addFrameToDataBuffer(frame, dataBuffer, dataBufferSize);
 
         //// EOF STUDENT ASSIGNMENT
         cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
@@ -182,4 +193,14 @@ int main(int argc, const char *argv[])
     } // eof loop over all images
 
     return 0;
+}
+
+void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer, const int maxDataBufferSize)
+{
+    if(dataBuffer.size() == maxDataBufferSize)
+    {
+        // Delete the first element in the buffer
+        dataBuffer.erase(dataBuffer.begin());
+    }
+    dataBuffer.push_back(frame);
 }
