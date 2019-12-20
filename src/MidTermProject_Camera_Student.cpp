@@ -16,6 +16,9 @@
 #include "dataStructures.h"
 #include "matching2D.hpp"
 
+#include <ctime>    // For time()
+#include <cstdlib>  // For srand() and rand()
+
 using namespace std;
 
 /**
@@ -86,16 +89,8 @@ int main(int argc, const char *argv[])
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
-        //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
-
-        if (detectorType.compare("SHITOMASI") == 0)
-        {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else
-        {
-            //...
-        }
+        //// -> SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+        detKeypointsModern(keypoints, imgGray, detectorType, false);
         //// EOF STUDENT ASSIGNMENT
 
         //// STUDENT ASSIGNMENT
@@ -120,6 +115,17 @@ int main(int argc, const char *argv[])
             if (detectorType.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
                 keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
+            }
+            else
+            {
+
+                srand(time(0));  // Initialize random number generator.
+                int counter = maxKeypoints;
+                while(--counter)
+                {
+                    int r = (rand() % keypoints.size());
+                    keypoints.erase(keypoints.begin() + r, keypoints.begin() + r + 1);
+                }
             }
             cv::KeyPointsFilter::retainBest(keypoints, maxKeypoints);
             cout << " NOTE: Keypoints have been limited!" << endl;
