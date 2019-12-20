@@ -30,6 +30,13 @@ using namespace std;
  */ 
 void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer, const int maxDataBufferSize);
 
+/**
+ * \brief This function erases the key points outside of the box
+ * \param[in] vehicleRect The rectangle that we want to get all the points in
+ * \param[in,out] keypoints The original keypoints that we will remove the points outside of the rectangle and keep only points insdie rectangle
+ */ 
+void eraseKeyPointsOutsideBox(cv::Rect vehicleRect,vector<cv::KeyPoint>& keypoints);
+
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
@@ -101,7 +108,7 @@ int main(int argc, const char *argv[])
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
-            // ...
+            eraseKeyPointsOutsideBox(vehicleRect, keypoints);
         }
 
         //// EOF STUDENT ASSIGNMENT
@@ -209,4 +216,20 @@ void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer,
         dataBuffer.erase(dataBuffer.begin());
     }
     dataBuffer.push_back(frame);
+}
+
+void eraseKeyPointsOutsideBox(cv::Rect vehicleRect,vector<cv::KeyPoint>& keypoints)
+{
+    //Added this comment so that I do not forget
+    /*TODO: there will be keypoints within the box that are e.g. on the road surface or on other vehicles.
+     Please keep an eye on their number in relation to keypoints on the actual vehicle and discuss
+    this later in the evaluation part of the mid-term project.
+    */
+    for(auto it = keypoints.end(); it != keypoints.begin(); --it)
+    {
+        if(vehicleRect.contains(it->pt) == false)
+        {
+            keypoints.erase(it, it + 1);
+        }
+    }
 }
