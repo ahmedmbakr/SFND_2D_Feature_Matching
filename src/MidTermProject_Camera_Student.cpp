@@ -19,7 +19,11 @@
 #include <ctime>    // For time()
 #include <cstdlib>  // For srand() and rand()
 
+#include "MidTermProject_PerformanceEval.hpp"
+
 using namespace std;
+
+#define PERFORMANCE_EVAL_CTRL (STD_ON)
 
 /**
  * This function is responsible for adding a new frame to data buffer. If the buffer size reached the maximum data buffer size
@@ -29,13 +33,6 @@ using namespace std;
  * \param[in] maxDataBuffersize maximum size for data buffer
  */ 
 void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer, const int maxDataBufferSize);
-
-/**
- * \brief This function erases the key points outside of the box
- * \param[in] vehicleRect The rectangle that we want to get all the points in
- * \param[in,out] keypoints The original keypoints that we will remove the points outside of the rectangle and keep only points insdie rectangle
- */ 
-void eraseKeyPointsOutsideBox(cv::Rect vehicleRect,vector<cv::KeyPoint>& keypoints);
 
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
@@ -62,6 +59,32 @@ int main(int argc, const char *argv[])
     bool bVis = false;            // visualize results
 
     /* MAIN LOOP OVER ALL IMAGES */
+
+    #if(PERFORMANCE_EVAL_CTRL == STD_ON)
+    cout<<"enter performance Evaluation\n";
+    freopen("output.out", "w", stdout);
+    for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
+    {
+        // assemble filenames for current index
+        ostringstream imgNumber;
+        imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
+        string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
+        cout << "Processing image number:" << imgIndex << endl;
+
+        // load image from file and convert to grayscale
+        cv::Mat img, imgGray;
+        img = cv::imread(imgFullFilename);
+        cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
+
+        // push image into data frame buffer
+        DataFrame frame;
+        frame.cameraImg = imgGray;
+        addFrameToDataBuffer(frame, dataBuffer, dataBufferSize);
+
+        performaceEval(dataBuffer, bVis);     
+    }
+
+    #else
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
     {
@@ -92,7 +115,7 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
+        string detectorType = "SIFT"; //SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
@@ -146,10 +169,10 @@ int main(int argc, const char *argv[])
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.4 -> add the following descriptors in file matching2D.cpp and enable string-based selection based on descriptorType
-        //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
+        //// -> BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
 
         cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
+        string descriptorType = "SIFT"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
         //// EOF STUDENT ASSIGNMENT
 
@@ -164,9 +187,9 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+            string matcherType = "MAT_FLANN";        // MAT_BF, MAT_FLANN
+            string descriptorType = "DES_HOG"; // DES_BINARY, DES_HOG
+            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -204,7 +227,7 @@ int main(int argc, const char *argv[])
         }
 
     } // eof loop over all images
-
+    #endif
     return 0;
 }
 
@@ -216,20 +239,4 @@ void addFrameToDataBuffer(const DataFrame& frame, vector<DataFrame>& dataBuffer,
         dataBuffer.erase(dataBuffer.begin());
     }
     dataBuffer.push_back(frame);
-}
-
-void eraseKeyPointsOutsideBox(cv::Rect vehicleRect,vector<cv::KeyPoint>& keypoints)
-{
-    //Added this comment so that I do not forget
-    /*TODO: there will be keypoints within the box that are e.g. on the road surface or on other vehicles.
-     Please keep an eye on their number in relation to keypoints on the actual vehicle and discuss
-    this later in the evaluation part of the mid-term project.
-    */
-    for(auto it = keypoints.end(); it != keypoints.begin(); --it)
-    {
-        if(vehicleRect.contains(it->pt) == false)
-        {
-            keypoints.erase(it, it + 1);
-        }
-    }
 }
