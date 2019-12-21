@@ -3,7 +3,7 @@
 
 void performaceEval(std::vector<DataFrame>& dataBuffer, bool bVis);
 
-void detectImgKeypoints(std::string detectorType, std::vector<cv::KeyPoint>& keypoints, cv::Mat& imgGray, bool bVis);
+void detectImgKeypoints(std::string detectorType, std::vector<cv::KeyPoint>& keypoints, cv::Mat& imgGray, bool bVis, double* time = nullptr);
 
 /**
  * \brief This function erases the key points outside of the box

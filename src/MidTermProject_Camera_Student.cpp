@@ -23,6 +23,9 @@
 
 using namespace std;
 
+#define STD_ON 1
+#define STD_OFF 0
+
 #define PERFORMANCE_EVAL_CTRL (STD_ON)
 
 /**
@@ -61,15 +64,21 @@ int main(int argc, const char *argv[])
     /* MAIN LOOP OVER ALL IMAGES */
 
     #if(PERFORMANCE_EVAL_CTRL == STD_ON)
+
     cout<<"enter performance Evaluation\n";
-    freopen("output.out", "w", stdout);
+    
+    #if(OUTPUT_TO_CSV_ENABLE == STD_ON)
+    freopen("output.csv", "w", stdout);
+    #endif
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
     {
         // assemble filenames for current index
         ostringstream imgNumber;
         imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex;
         string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
+        #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
         cout << "Processing image number:" << imgIndex << endl;
+        #endif
 
         // load image from file and convert to grayscale
         cv::Mat img, imgGray;

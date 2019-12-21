@@ -5,7 +5,7 @@ using namespace std;
 
 // Find best matches for keypoints in two camera images based on several matching methods
 void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
-                      std::vector<cv::DMatch> &matches, std::string descriptorType, std::string matcherType, std::string selectorType)
+                      std::vector<cv::DMatch> &matches, std::string descriptorType, std::string matcherType, std::string selectorType, double* time)
 {
     // configure matcher
     bool crossCheck = false;
@@ -29,14 +29,21 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         }
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     }
-
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
         double t = (double)cv::getTickCount();
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
         t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+        #if (OUTPUT_TO_CSV_ENABLE == STD_ON)
+        if(time != nullptr)
+        {
+            *time = t;
+        }
+        #endif
+        #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
         cout << " (NN) with n=" << matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
+        #endif
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
@@ -44,7 +51,15 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         double t = (double)cv::getTickCount();
         matcher->knnMatch(descSource, descRef, knn_matches, 2); // finds the 2 best matches
         t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+        #if (OUTPUT_TO_CSV_ENABLE == STD_ON)
+        if(time != nullptr)
+        {
+            *time = t;
+        }
+        #endif
+        #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
         cout << " (KNN) with n=" << knn_matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
+        #endif
 
         // filter matches using descriptor distance ratio test
         double minDescDistRatio = 0.8;
@@ -56,12 +71,14 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
                 matches.push_back((*it)[0]);
             }
         }
+        #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
         cout << "# keypoints removed = " << knn_matches.size() - matches.size() << endl;
+        #endif
     }
 }
 
 // Use one of several types of state-of-art descriptors to uniquely identify keypoints
-void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
+void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType, double* time)
 {
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
@@ -97,7 +114,9 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     else
     {
         //Error
+        #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
         cout<< "Error no valid descriptor extractor is chosen. Program exit\n";
+        #endif
         exit(1);
     }
 
@@ -106,10 +125,16 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     double t = (double)cv::getTickCount();
     extractor->compute(img, keypoints, descriptors);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+    if(time != nullptr)
+    {
+        *time = t;
+    }
+    #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
     cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0 << " ms" << endl;
+    #endif
 }
 
-void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis)
+void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis, double * time)
 {
     double t = (double)cv::getTickCount();
     if(detectorType.compare("SHITOMASI") == 0)
@@ -153,7 +178,13 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
         exit(1);
     }
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+    if(time != nullptr)
+    {
+        *time = t;
+    }
+    #if (OUTPUT_TO_CSV_ENABLE != STD_ON)
     cout <<" detector for keypoints took " << 1000 * t / 1.0 << " ms" << endl;
+    #endif
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
